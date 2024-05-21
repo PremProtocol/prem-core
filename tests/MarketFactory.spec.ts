@@ -39,13 +39,18 @@ describe('MainContract', () => {
         // blockchain and mainContract are ready to use 
     });
 
-    it('should create market', async()=>{
+    it('should initialize contract correctly', async () => {
+        // Check the state of the contract to ensure the market was created
+        const counter = await marketFactory.getCounter();
+        expect(counter).toEqual(0n);
+    });
+    it('should create market and increment the counter', async()=>{
         const createMarketResult = await marketFactory.send(deployer.getSender(), {
             value: toNano('0.2')
         }, {
             $$type: 'CreateMarket',
             eventDescription: "New event",
-            endTime: 100n, //add now time
+            endTime: BigInt(Date.now() + 60),
             numOutcomes: 2n,
         })
 
@@ -57,35 +62,88 @@ describe('MainContract', () => {
     
         // Check the state of the contract to ensure the market was created
         const counter = await marketFactory.getCounter();
-        expect(counter).toEqual(1);
+        expect(counter).toEqual(1n);
     })
 
-    it('should initialize contract correctly', async () => {
-        // TODO: Implement test
-    });
+    // it('should create initial state for new market', async () => {
+    //     const createMarketResult = await marketFactory.send(deployer.getSender(), {
+    //         value: toNano('0.2')
+    //     }, {
+    //         $$type: 'CreateMarket',
+    //         eventDescription: "New event",
+    //         endTime: BigInt(Date.now() + 60),
+    //         numOutcomes: 2n,
+    //     })
 
-    // Test the increment of the counter
-    it('should increment the counter', async () => {
-        // TODO: Implement test
-    });
+    //     // Check the state of the contract to ensure the market was created
+    // });
 
-    // Test the creation of the initial state for a new market
-    it('should create initial state for new market', async () => {
-        // TODO: Implement test
-    });
-
-    // Test the calculation of the future address of the contract
-    it('should calculate future address of the contract', async () => {
-        // TODO: Implement test
-    });
-
-    // Test the handling of invalid end time
     it('should handle invalid end time', async () => {
-        // TODO: Implement test
+        const createMarketResult = await marketFactory.send(deployer.getSender(), {
+            value: toNano('0.2')
+        }, {
+            $$type: 'CreateMarket',
+            eventDescription: "New event",
+            endTime: 0n,
+            numOutcomes: 2n,
+        })
+
+        expect(createMarketResult.transactions).toHaveTransaction({
+            from: deployer.address,  
+            to: marketFactory.address,
+            success: false
+        });
     });
 
     // Test the handling of invalid number of outcomes
     it('should handle invalid number of outcomes', async () => {
-        // TODO: Implement test
+        const createMarketResult = await marketFactory.send(deployer.getSender(), {
+            value: toNano('0.2')
+        }, {
+            $$type: 'CreateMarket',
+            eventDescription: "New event",
+            endTime: BigInt(Date.now() - 60),
+            numOutcomes: 1n,
+        })
+
+        expect(createMarketResult.transactions).toHaveTransaction({
+            from: deployer.address,  
+            to: marketFactory.address,
+            success: false
+        });
+    });
+
+    // Testing transaction fees
+    it('should storage fees cost less than 1 TON', async () => {
+        const time1 = Math.floor(Date.now() / 1000);                               // current local unix time
+        const time2 = time1 + 365 * 24 * 60 * 60;                                  // offset for a year
+    
+        blockchain.now = time1;                                                    // set current time
+        await marketFactory.send(deployer.getSender(), {
+            value: toNano('0.2')
+        }, {
+            $$type: 'CreateMarket',
+            eventDescription: "New event",
+            endTime: BigInt(Date.now() + 60), //add now time
+            numOutcomes: 2n,
+        });   // preview of fees 
+    
+        blockchain.now = time2;                                                    // set current time
+        const res2 = await marketFactory.send(deployer.getSender(), {
+            value: toNano('0.2')
+        }, {
+            $$type: 'CreateMarket',
+            eventDescription: "New event 2",
+            endTime: BigInt(Date.now() + 60), //add now time
+            numOutcomes: 2n,
+        });   // preview of fees 
+    
+        const tx2 = res2.transactions[1];                                          // extract the transaction that executed in a year
+        if (tx2.description.type !== 'generic') {
+            throw new Error('Generic transaction expected');
+        }
+    
+        // Check that the storagePhase fees are less than 1 TON over the course of a year
+        expect(tx2.description.storagePhase?.storageFeesCollected).toBeLessThanOrEqual(toNano('1'));   
     });
 });

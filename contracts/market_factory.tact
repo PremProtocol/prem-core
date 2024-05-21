@@ -21,6 +21,7 @@ contract MarketFactory with Deployable {
     receive(msg: CreateMarket) {
         require(msg.endTime > now(), "End time must be in the future");
         require(msg.numOutcomes > 1, "Number of outcomes must be greater than 1");
+        // require(msg.eventDescription is not null, "Event description has must be provided");
 
         // Increment the counter to ensure unique deployment
         self.counter += 1;
