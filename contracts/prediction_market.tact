@@ -1,58 +1,90 @@
 import "@stdlib/deploy";
+import "./user_bet.tact";
+
+message Initialize {
+    eventDescription: String;
+    endTime: Int as uint64;
+    creator: Address;
+    numOutcomes: Int as uint8;
+}
+
+message PlaceBet {
+    outcome: Int as int8;
+}
+
+message ResolveMarket {
+    outcome: Int as int8;
+}
 
 contract PredictionMarket with Deployable {
     creator: Address;
     eventDescription: String;
-    endTime: Uint;
+    endTime: Int as uint64;
     resolved: Bool;
-    outcome: Uint;
-    map<Address, Uint> betsForOutcome1;
-    map<Address, Uint> betsForOutcome2;
-    totalBetsOutcome1: Uint;
-    totalBetsOutcome2: Uint;
+    outcome: Int as int8;
+    numOutcomes: Int as uint8;
+    totalBets: Int as uint64[];
 
-    init(eventDescription: String, endTime: Uint, creator: Address) {
+    init(eventDescription: String, endTime: Int as uint64, creator: Address, numOutcomes: Int as uint8) {
         self.creator = creator;
         self.eventDescription = eventDescription;
         self.endTime = endTime;
         self.resolved = false;
-        self.outcome = 0;
-        self.totalBetsOutcome1 = 0;
-        self.totalBetsOutcome2 = 0;
-    }
-
-    receive("placeBet", outcome: Uint) payable {
-        require(self.now() < self.endTime, 1001, "Betting has ended");
-
-        if (outcome == 1) {
-            self.betsForOutcome1[selfmsg.sender] += selfmsg.value;
-            self.totalBetsOutcome1 += selfmsg.value;
-        } else {
-            self.betsForOutcome2[selfmsg.sender] += selfmsg.value;
-            self.totalBetsOutcome2 += selfmsg.value;
+        self.outcome = -1; // No outcome resolved yet
+        self.numOutcomes = numOutcomes;
+        self.totalBets = new Int as uint64[self.numOutcomes];
+        for (let i = 0; i < self.numOutcomes; i++) {
+            self.totalBets[i] = 0;
         }
     }
 
-    receive("resolveMarket", outcome: Uint) {
-        require(self.now() >= self.endTime, 1002, "Event has not ended");
-        require(!self.resolved, 1003, "Market already resolved");
-        
+    receive(msg: PlaceBet) {
+        require(now() < self.endTime, 1101, "Betting has ended");
+        require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, 1102, "Invalid outcome");
+
+        // Deploy UserBet contract for the user
+        let userBetInitState: StateInit = initOf UserBet(sender(), self);
+        let userBetAddress: Address = contractAddress(userBetInitState);
+
+        send(SendParameters{
+            to: userBetAddress,
+            value: ton("0.1"), // Adjust this value as needed
+            mode: SendIgnoreErrors,
+            code: userBetInitState.code,
+            data: userBetInitState.data,
+            body: "initialize".asComment()
+        });
+
+        self.totalBets[msg.outcome] += msg.value;
+    }
+
+    receive(msg: ResolveMarket) {
+        require(now() >= self.endTime, 1103, "Event has not ended");
+        require(!self.resolved, 1104, "Market already resolved");
+        require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, 1105, "Invalid outcome");
+
         self.resolved = true;
-        self.outcome = outcome;
+        self.outcome = msg.outcome;
     }
 
-    receive("claimWinnings") {
-        require(self.resolved, 1004, "Market not resolved");
-
-        let winnings: Uint;
-        if (self.outcome == 1) {
-            winnings = self.betsForOutcome1[selfmsg.sender] * (self.totalBetsOutcome1 + self.totalBetsOutcome2) / self.totalBetsOutcome1;
-        } else {
-            winnings = self.betsForOutcome2[selfmsg.sender] * (self.totalBetsOutcome1 + self.totalBetsOutcome2) / self.totalBetsOutcome2;
+    get fun totalPool(): Int as uint64 {
+        let total: Int as uint64 = 0;
+        for (let i = 0; i < self.numOutcomes; i++) {
+            total += self.totalBets[i];
         }
+        return total;
+    }
 
-        require(winnings > 0, 1005, "No winnings to claim");
+    get fun totalBetForOutcome(outcome: Int as int8): Int as uint64 {
+        require(outcome >= 0 && outcome < self.numOutcomes, 1106, "Invalid outcome");
+        return self.totalBets[outcome];
+    }
 
-        selfmsg.sender.transfer(winnings);
+    get fun resolvedOutcome(): Int as int8 {
+        return self.outcome;
+    }
+
+    get fun isResolved(): Bool {
+        return self.resolved;
     }
 }

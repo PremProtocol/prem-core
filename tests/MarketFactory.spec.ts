@@ -1,6 +1,6 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { toNano } from '@ton/core';
-import { MainContract } from '../wrappers/MainContract';
+import { MainContract } from '../wrappers/MarketFactory';
 import '@ton/test-utils';
 
 describe('MainContract', () => {
