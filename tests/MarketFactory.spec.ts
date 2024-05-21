@@ -3,7 +3,7 @@ import { toNano } from '@ton/core';
 import { MarketFactory } from '../wrappers/MarketFactory';
 import '@ton/test-utils';
 
-describe('MainContract', () => {
+describe('MarketFactory', () => {
     let blockchain: Blockchain;
     let deployer: SandboxContract<TreasuryContract>;
     let marketFactory: SandboxContract<MarketFactory>;
