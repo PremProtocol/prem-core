@@ -1,13 +1,6 @@
 import "@stdlib/deploy";
 import "./user_bet.tact";
 
-message InitializePredictionMarket {
-    eventDescription: String;
-    endTime: Int as uint64;
-    creator: Address;
-    numOutcomes: Int as uint8;
-}
-
 message PlaceBet {
     outcome: Int as int8;
     value: Int as uint64;
@@ -27,13 +20,17 @@ contract PredictionMarket with Deployable {
     totalBets: map<Int as uint8, Int as uint64>; // Map to store bets for each outcome
     totalPool: Int as uint64;
 
-    init(msg: InitializePredictionMarket) {
-        self.creator = msg.creator;
-        self.eventDescription = msg.eventDescription;
-        self.endTime = msg.endTime;
+    init(parent: Address, 
+            eventDescription: String, 
+            endTime: Int, 
+            creator: Address,
+            numOutcomes: Int) {
+        self.creator = creator;
+        self.eventDescription = eventDescription;
+        self.endTime = endTime;
+        self.numOutcomes = numOutcomes;
         self.resolved = false;
         self.outcome = -1; // No outcome resolved yet
-        self.numOutcomes = msg.numOutcomes;
         self.totalPool = 0;
     }
 
@@ -46,10 +43,7 @@ contract PredictionMarket with Deployable {
         self.totalPool += msg.value;
 
         // Deploy UserBet contract for the user
-        let userBetInitState: StateInit = initOf UserBet(InitializeUserBet{
-            user: sender(), 
-            market: myAddress()
-        });
+        let userBetInitState: StateInit = initOf UserBet(sender(), myAddress());
         let userBetAddress: Address = contractAddress(userBetInitState);
 
         send(SendParameters{

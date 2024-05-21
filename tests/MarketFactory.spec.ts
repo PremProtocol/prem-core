@@ -45,7 +45,7 @@ describe('MainContract', () => {
         }, {
             $$type: 'CreateMarket',
             eventDescription: "New event",
-            endTime: 100n, //now + 1 day
+            endTime: 100n, //add now time
             numOutcomes: 2n,
         })
 

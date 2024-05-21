@@ -1,26 +1,16 @@
 import "@stdlib/deploy";
 
-message InitializeUserBet {
-    user: Address;
-    market: Address;
-}
-
 contract UserBet with Deployable {
     user: Address;
     market: Address;
     betAmount: Int as uint64;
     outcome: Int as int8;
 
-    init(msg: InitializeUserBet) {
-        self.user = msg.user;
-        self.market = msg.market;
+    init(user: Address, market: Address) {
+        self.user = user;
+        self.market = market;
         self.betAmount = 0;
         self.outcome = -1; // Default to no outcome
-    }
-
-    receive(msg: InitializeUserBet) {
-        self.user = msg.user;
-        self.market = msg.market;
     }
 
     receive(msg: PlaceBet) {
@@ -30,7 +20,7 @@ contract UserBet with Deployable {
     }
 
     // receive("claimWinnings") {
-    //     require(PredictionMarket(self.market).isResolved(), 1202, "Market not resolved");
+    //     require(PredictionMarket(self.market).isResolved(), "Market not resolved");
 
     //     let actualOutcome = PredictionMarket(self.market).resolvedOutcome();
     //     if (self.outcome == actualOutcome) {
