@@ -13,7 +13,7 @@ contract Oracle with Deployable {
     }
 
     receive(msg: SetOutcome) {
-        require(sender() == self.owner, 1301, "Only owner can set outcome");
+        require(sender() == self.owner, "Only owner can set outcome");
         PredictionMarket(msg.market).receive(ResolveMarket(msg.outcome));
     }
 }

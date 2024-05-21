@@ -15,14 +15,20 @@ contract MarketFactory with Deployable {
     }
 
     receive(msg: CreateMarket) {
-        require(msg.endTime > now(), 1001, "End time must be in the future");
-        require(msg.numOutcomes > 1, 1002, "Number of outcomes must be greater than 1");
+        require(msg.endTime > now(), "End time must be in the future");
+        require(msg.numOutcomes > 1, "Number of outcomes must be greater than 1");
 
         // Increment the counter to ensure unique deployment
         self.counter += 1;
 
         // Define the initial state for the new market
-        let initState: StateInit = initOf PredictionMarket(msg.eventDescription, msg.endTime, sender(), msg.numOutcomes);
+
+        let initState: StateInit = initOf PredictionMarket(InitializePredictionMarket{
+            eventDescription: msg.eventDescription, 
+            endTime: msg.endTime, 
+            creator: sender(), 
+            numOutcomes: msg.numOutcomes
+        });
 
         // Calculate the future address of the contract
         let futureAddress: Address = contractAddress(initState);
