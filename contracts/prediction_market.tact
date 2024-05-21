@@ -1,14 +1,6 @@
 import "@stdlib/deploy";
 import "./user_bet.tact";
-
-message PlaceBet {
-    outcome: Int as int8;
-    value: Int as uint64;
-}
-
-message ResolveMarket {
-    outcome: Int as int8;
-}
+import "./messages.tact";
 
 contract PredictionMarket with Deployable {
     creator: Address;
@@ -39,20 +31,21 @@ contract PredictionMarket with Deployable {
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
 
         let currentBet: Int = self.totalBets.get(msg.outcome)!!;
-        self.totalBets.set(msg.outcome, currentBet + msg.value);
-        self.totalPool += msg.value;
 
-        // Deploy UserBet contract for the user
+        // here is maybe wrong because there is no value for gas cost
+        self.totalBets.set(msg.outcome, currentBet + context().value);
+        self.totalPool += context().value;
+
+        // TODO: move to separate function
         let userBetInitState: StateInit = initOf UserBet(sender(), myAddress());
         let userBetAddress: Address = contractAddress(userBetInitState);
-
         send(SendParameters{
             to: userBetAddress,
-            value: ton("0.1"), // Adjust this value as needed
+            value: context().value,
             mode: SendIgnoreErrors,
             code: userBetInitState.code,
             data: userBetInitState.data,
-            body: "initialize".asComment()
+            body: PlaceBetInternal{outcome: msg.outcome}.toCell()
         });
     }
 

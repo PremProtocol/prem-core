@@ -1,4 +1,5 @@
 import "@stdlib/deploy";
+import "./messages.tact";
 
 contract UserBet with Deployable {
     user: Address;
@@ -13,10 +14,15 @@ contract UserBet with Deployable {
         self.outcome = -1; // Default to no outcome
     }
 
-    receive(msg: PlaceBet) {
+    receive(msg: PlaceBetInternal) {
+        receive(sender() == self.market, "Only the market can place a bet")
         require(self.outcome == -1, "Bet already placed");
         self.outcome = msg.outcome;
-        self.betAmount = msg.value;
+
+        //TODO: Think about adding more than one bet in future
+        self.betAmount = context().value;
+
+        //TODO: Gas refund if bet is not placed
     }
 
     // receive("claimWinnings") {

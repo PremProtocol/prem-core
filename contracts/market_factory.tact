@@ -1,52 +1,37 @@
 import "@stdlib/deploy";
+import "@stdlib/ownable";
 import "./prediction_market.tact";
+import "./messages.tact";
 
-message CreateMarketResponse {
-    address: Address;
-}
-
-message CreateMarket {
-    eventDescription: String;
-    endTime: Int as uint64;
-    numOutcomes: Int as uint8;
-}
-
-contract MarketFactory with Deployable {
-    counter: Int as uint64;
+// FactoryDeployable for cashback???
+// https://github.com/tact-lang/tact/blob/main/stdlib/libs/deploy.tact
+contract MarketFactory with Deployable, OwnableTransferable {
+    owner: Address;
 
     init() {
-        self.counter = 0;
+        self.owner = sender();
     }
 
     receive(msg: CreateMarket) {
         require(msg.endTime > now(), "End time must be in the future");
         require(msg.numOutcomes > 1, "Number of outcomes must be greater than 1");
-        // require(msg.eventDescription is not null, "Event description has must be provided");
+        require(msg.eventDescription != "", "Event description has must be provided");
+        //require(msg.eventDescription.length() < 100, "Event description must be less than 100 characters");
+        //requireOwner();
 
-        // Increment the counter to ensure unique deployment
-        self.counter += 1;
-
-        // Define the initial state for the new market
-
+        // TODO: move to separate function
         let initState: StateInit = initOf PredictionMarket(myAddress(), msg.eventDescription, msg.endTime, sender(), msg.numOutcomes);
-
         let preMarketContractAddress: Address = contractAddress(initState);
-
-        // Deploy the new market contract with an initial balance of 1 ton
         send(SendParameters{
             to: preMarketContractAddress,
-            value: ton("0.2"),               // pay for the message, the deployment, and give some TON for storage
+            value: ton("0.3"),
             mode: SendIgnoreErrors,
-            code: initState.code,          // attaching the state init will cause the message to deploy
+            code: initState.code,
             data: initState.data,
-            body: "initialize".asComment() // we must piggyback the deployment on another message
+            body: "deploy".asComment()
         });
 
         // pay-back remaining gas
         self.reply(CreateMarketResponse{address: preMarketContractAddress}.toCell());
-    }
-
-    get fun counter(): Int {
-        return self.counter;
     }
 }
