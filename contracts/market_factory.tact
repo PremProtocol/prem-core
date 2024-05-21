@@ -43,4 +43,8 @@ contract MarketFactory with Deployable {
             body: "initialize".asComment() // we must piggyback the deployment on another message
         });
     }
+
+    get fun counter(): Int {
+        return self.counter;
+    }
 }
