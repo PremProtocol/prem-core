@@ -8,21 +8,24 @@ contract PredictionMarket with Deployable {
     endTime: Int as uint64;
     resolved: Bool;
     outcome: Int as uint8;
-    outcomes: map<Int as uint8, Outcomes>;
+    outcomeName1: String;
+    outcomeName2: String;
     numOutcomes: Int as uint8;
-    totalBets: map<Int as uint8, Int as uint64>; // Map to store bets for each outcome
+    totalOutcomeBets: map<Int as uint8, Int as uint64>; // Map to store bets for each outcome
     totalPool: Int as uint64;
 
     init(parent: Address, 
             creator: Address,
             eventDescription: String, 
             endTime: Int, 
-            outcomes: map<Int as uint8, Outcomes>,
+            outcomeName1: String,
+            outcomeName2: String,
             numOutcomes: Int) {
         self.creator = creator;
         self.eventDescription = eventDescription;
         self.endTime = endTime;
-        self.outcomes = outcomes;
+        self.outcomeName1 = outcomeName1;
+        self.outcomeName2 = outcomeName2;
         self.numOutcomes = numOutcomes;
         self.resolved = false;
         self.outcome = -1; // No outcome resolved yet
@@ -33,41 +36,56 @@ contract PredictionMarket with Deployable {
         require(now() < self.endTime, "Betting has ended");
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
 
-        let currentBet: Int = self.totalBets.get(msg.outcome)!!;
-
+        let currentBet: Int = self.totalOutcomeBets.get(msg.outcome)!!;
         let newBetAmount: Int = context().value - ton("0.02"); // left some coins for gas cost
-        self.totalBets.set(msg.outcome, currentBet + newBetAmount);
+        self.totalOutcomeBets.set(msg.outcome, currentBet + newBetAmount);
         self.totalPool += newBetAmount;
 
         // TODO: move to separate function
-        self.deployUserBet(sender(), myAddress(), newBetAmount, msg.outcome);
-
-        // TODO: reply to return gas cost???
+        self.placeUserBet(sender(), myAddress(), newBetAmount, msg.outcome);
     }
 
     receive(msg: ResolveMarket) {
-        require(sender() == self.creator, "Only creator can resolve market");
-        require(now() >= self.endTime, "Event has not ended");
-        require(!self.resolved, "Market already resolved");
-        require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
+        // require(sender() == self.creator, "Only creator can resolve market");
+        // require(now() >= self.endTime, "Event has not ended");
+        // require(!self.resolved, "Market already resolved");
+        // require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
 
         self.resolved = true;
         self.outcome = msg.outcome;
 
         // pay-back remaining gas
-        self.reply("gas returned".asComment());
+        //self.reply("gas returned".asComment());
+    }
+
+    receive(msg: ClaimWinningsInfo) {
+        require(sender() == msg.userBet, "Only owner can claim winnings");
+        require(self.resolved, "Market should be resolved to claim winnings");
+        require(self.outcome == msg.outcome, "Outcome does not match the bet outcome");
+
+        if (self.outcome == msg.outcome){
+            let userShare: Int = (msg.betAmount * self.totalPool) / self.totalOutcomeBets.get(msg.outcome)!!;
+            send(SendParameters{
+                to: msg.userBet,
+                value: ton("0.02"), // userShare to currency
+                mode: SendIgnoreErrors,
+                body: "claimWinningsInternal".asComment()
+            });
+        } else {
+            // TODO: descroy the user bet contract
+        }
     }
 
     bounced(src: Slice) {
         // ...
     }
 
-    fun deployUserBet(owner: Address, parent: Address, betAmount: Int, outcome: Int) {
+    fun placeUserBet(owner: Address, parent: Address, betAmount: Int, outcome: Int) {
         let userBetInitState: StateInit = initOf UserBet(owner, parent);
         let userBetAddress: Address = contractAddress(userBetInitState);
         send(SendParameters{
             to: userBetAddress,
-            value: betAmount,
+            value: ton("0.02"),
             mode: SendIgnoreErrors,
             code: userBetInitState.code,
             data: userBetInitState.data,
@@ -81,7 +99,7 @@ contract PredictionMarket with Deployable {
 
     get fun totalBetForOutcome(outcome: Int): Int {
         require(outcome >= 0 && outcome < self.numOutcomes, "Invalid outcome");
-        return self.totalBets.get(outcome)!!;
+        return self.totalOutcomeBets.get(outcome)!!;
     }
 
     get fun resolvedOutcome(): Int {

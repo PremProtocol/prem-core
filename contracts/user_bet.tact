@@ -23,18 +23,36 @@ contract UserBet with Deployable {
         self.betAmount = context().value;
 
         //TODO: Gas refund if bet is not placed
+        self.reply("gas returned".asComment());
     }
 
-    // receive("claimWinnings") {
-    //     require(PredictionMarket(self.parent).isResolved(), "Market not resolved");
+    receive("claimWinnings") {
+        require(sender() == self.owner, "Only the owner can claim winnings");
 
-    //     let actualOutcome = PredictionMarket(self.parent).resolvedOutcome();
-    //     if (self.outcome == actualOutcome) {
-    //         let totalPool = PredictionMarket(self.parent).totalPool();
-    //         let userShare = (self.betAmount * totalPool) / PredictionMarket(self.market).totalBetForOutcome(self.outcome);
-    //         self.user.transfer(userShare);
-    //     } else {
-    //         revert(1203, "No winnings to claim");
-    //     }
-    // }
+        send(SendParameters{
+            to: self.parent,
+            value: ton("0.02"),
+            mode: SendIgnoreErrors,
+            body: ClaimWinningsInfo{
+                outcome: self.outcome,
+                betAmount: self.betAmount,
+                userBet: myAddress()}.toCell()
+        });
+    }
+
+    receive("claimWinningsInternal") {
+        require(sender() == self.parent, "Only the market can call this function");
+        
+        send(SendParameters{
+            to: self.owner,
+            value: 0,
+            mode: SendRemainingBalance | SendDestroyIfZero | SendIgnoreErrors,
+        });
+    }
+
+    get fun userBet(): UserBetInfo {
+        return UserBetInfo{
+            betAmount: self.betAmount,
+            outcome: self.outcome};
+    }
 }

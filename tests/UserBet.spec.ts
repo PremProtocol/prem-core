@@ -14,7 +14,14 @@ describe('UserBet', () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        predictionMarket = blockchain.openContract(await PredictionMarket.fromInit(marketFactory.address, "New Market", BigInt(Date.now() + 60), deployer.address, 2n));
+        predictionMarket = blockchain.openContract(await PredictionMarket.fromInit(deployer.address, 
+            deployer.address,
+            "New Market", 
+            BigInt(Date.now() + 60),  
+            "outcomeName1",
+            "outcomeName2",
+            2n));
+            
         userBet = blockchain.openContract(await UserBet.fromInit(deployer.address, predictionMarket.address));
 
         const deployResult = await userBet.send(

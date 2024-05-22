@@ -14,28 +14,28 @@ contract MarketFactory with Deployable, OwnableTransferable {
 
     receive(msg: CreateMarket) {
         require(msg.endTime > now(), "End time must be in the future");
-        require(!msg.outcomes.isEmpty(), "Should be more tham 1 outcomes");
-        require(msg.numOutcomes >= 0, "Should be more tham 1 outcomes");
+        require(msg.outcomeName1 != "", "Outcome names must be provided");
+        require(msg.outcomeName2 != "", "Outcome names must be provided");
+        require(msg.numOutcomes == 2, "Should be only 2 outcomes");
         require(msg.eventDescription != "", "Event description has must be provided");
-        //require(msg.eventDescription.length() < 100, "Event description must be less than 100 characters");
+        //require(msg.eventDescription.length() < 100, "Eventoutcomes description must be less than 100 characters");
         self.requireOwner();
 
-        let preMarketContractAddress: Address = self.deployPredictionMarket(msg.eventDescription, msg.endTime, msg.outcomes, msg.numOutcomes);
+        let preMarketContractAddress: Address = self.deployPredictionMarket(msg.eventDescription, msg.endTime, msg.outcomeName1, msg.outcomeName2, msg.numOutcomes);
         
-        // pay-back remaining gas
+        // returning all excess
         self.reply(CreateMarketResponse{address: preMarketContractAddress}.toCell());
     }
 
-    fun deployPredictionMarket(eventDescription: String, endTime: Int, outcomes: map<Int as uint8, Outcomes>, numOutcomes: Int): Address {
-        let initState: StateInit = initOf PredictionMarket(myAddress(), sender(), eventDescription, endTime, outcomes, numOutcomes);
+    fun deployPredictionMarket(eventDescription: String, endTime: Int, outcomeName1: String, outcomeName2: String, numOutcomes: Int): Address {
+        let initState: StateInit = initOf PredictionMarket(myAddress(), sender(), eventDescription, endTime, outcomeName1, outcomeName2, numOutcomes);
         let preMarketContractAddress: Address = contractAddress(initState);
         send(SendParameters{
             to: preMarketContractAddress,
             value: ton("0.3"),
             mode: SendIgnoreErrors,
             code: initState.code,
-            data: initState.data,
-            body: "deploy".asComment()
+            data: initState.data
         });
         return preMarketContractAddress;
     }

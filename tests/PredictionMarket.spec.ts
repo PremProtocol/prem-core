@@ -14,7 +14,13 @@ describe('PredictionMarket', () => {
         blockchain = await Blockchain.create();
         deployer = await blockchain.treasury('deployer');
         marketFactory = blockchain.openContract(await MarketFactory.fromInit());
-        predictionMarket = blockchain.openContract(await PredictionMarket.fromInit(marketFactory.address, "New Market", BigInt(Date.now() + 60), deployer.address, 2n));
+        predictionMarket = blockchain.openContract(await PredictionMarket.fromInit(marketFactory.address, 
+            deployer.address,
+            "New Market", 
+            BigInt(Date.now() + 60), 
+            "outcomeName 1",
+            "outcomeName 2",
+            2n));
 
         const deployResult = await predictionMarket.send(
             deployer.getSender(),

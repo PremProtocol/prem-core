@@ -10,9 +10,7 @@ describe('MarketFactory', () => {
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
-
         marketFactory = blockchain.openContract(await MarketFactory.fromInit());
-
         deployer = await blockchain.treasury('deployer');
 
         const deployResult = await marketFactory.send(
@@ -39,18 +37,16 @@ describe('MarketFactory', () => {
         // blockchain and mainContract are ready to use 
     });
 
-    it('should initialize contract correctly', async () => {
-        // Check the state of the contract to ensure the market was created
-        const counter = await marketFactory.getCounter();
-        expect(counter).toEqual(0n);
-    });
-    it('should create market and increment the counter', async()=>{
+    it('should create market', async()=>{
+
         const createMarketResult = await marketFactory.send(deployer.getSender(), {
             value: toNano('0.2')
         }, {
             $$type: 'CreateMarket',
             eventDescription: "New event",
             endTime: BigInt(Date.now() + 60),
+            outcomeName1: "outcomeName1",
+            outcomeName2: "outcomeName2",
             numOutcomes: 2n,
         })
 
@@ -59,13 +55,9 @@ describe('MarketFactory', () => {
             to: marketFactory.address,
             success: true,
         });
-    
-        // Check the state of the contract to ensure the market was created
-        const counter = await marketFactory.getCounter();
-        expect(counter).toEqual(1n);
     })
 
-    // it('should create initial state for new market', async () => {
+    // it('should create initial state for new prediction market', async () => {
     //     const createMarketResult = await marketFactory.send(deployer.getSender(), {
     //         value: toNano('0.2')
     //     }, {
@@ -85,6 +77,8 @@ describe('MarketFactory', () => {
             $$type: 'CreateMarket',
             eventDescription: "New event",
             endTime: 0n,
+            outcomeName1: "outcomeName1",
+            outcomeName2: "outcomeName2",
             numOutcomes: 2n,
         })
 
@@ -103,7 +97,9 @@ describe('MarketFactory', () => {
             $$type: 'CreateMarket',
             eventDescription: "New event",
             endTime: BigInt(Date.now() - 60),
-            numOutcomes: 1n,
+            outcomeName1: "outcomeName1",
+            outcomeName2: "outcomeName2",
+            numOutcomes: 0n,
         })
 
         expect(createMarketResult.transactions).toHaveTransaction({
@@ -115,30 +111,35 @@ describe('MarketFactory', () => {
 
     // Testing transaction fees
     it('should storage fees cost less than 1 TON', async () => {
-        const time1 = Math.floor(Date.now() / 1000);                               // current local unix time
-        const time2 = time1 + 365 * 24 * 60 * 60;                                  // offset for a year
-    
-        blockchain.now = time1;                                                    // set current time
+        const time1 = Math.floor(Date.now() / 1000);
+        const time2 = time1 + 365 * 24 * 60 * 60;
+
+        blockchain.now = time1;
         await marketFactory.send(deployer.getSender(), {
             value: toNano('0.2')
         }, {
             $$type: 'CreateMarket',
             eventDescription: "New event",
             endTime: BigInt(Date.now() + 60), //add now time
+            outcomeName1: "outcomeName1",
+            outcomeName2: "outcomeName2",
             numOutcomes: 2n,
-        });   // preview of fees 
+        });
     
-        blockchain.now = time2;                                                    // set current time
+        blockchain.now = time2;
+
         const res2 = await marketFactory.send(deployer.getSender(), {
             value: toNano('0.2')
         }, {
             $$type: 'CreateMarket',
             eventDescription: "New event 2",
-            endTime: BigInt(Date.now() + 60), //add now time
+            endTime: BigInt(Date.now() + 60),
+            outcomeName1: "outcomeName1",
+            outcomeName2: "outcomeName2",
             numOutcomes: 2n,
-        });   // preview of fees 
+        });
     
-        const tx2 = res2.transactions[1];                                          // extract the transaction that executed in a year
+        const tx2 = res2.transactions[1];
         if (tx2.description.type !== 'generic') {
             throw new Error('Generic transaction expected');
         }

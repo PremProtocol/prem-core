@@ -1,7 +1,3 @@
-struct Outcomes {
-    name: String;
-}
-
 // MarketFactory Messages
 message CreateMarketResponse {
     address: Address;
@@ -10,7 +6,9 @@ message CreateMarketResponse {
 message CreateMarket {
     eventDescription: String;
     endTime: Int as uint64;
-    outcomes: map<Int as uint8, Outcomes>;
+    // need to rewrite it to map, but luck of examples/tools
+    outcomeName1: String;
+    outcomeName2: String;
     numOutcomes: Int as uint8;
 }
 
@@ -23,8 +21,26 @@ message ResolveMarket {
     outcome: Int as uint8;
 }
 
+message ClaimWinningsInfo {
+    betAmount: Int as uint64;
+    userBet: Address;
+    outcome: Int as uint8;
+}
+
 // UserBet Messages
 message PlaceBetInternal {
     outcome: Int as uint8;
+}
+
+message UserBetInfo{
+    outcome: Int as uint8;
+    betAmount: Int as uint64;
+}
+
+message ClaimWinningsInternal {
+    resolved: Bool;
+    winningOutcome: Int as uint8;
+    totalPool: Int as uint64;
+    totalOutcomeBets: Int as uint64;
 }
 
