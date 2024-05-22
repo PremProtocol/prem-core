@@ -14,13 +14,20 @@ contract MarketFactory with Deployable, OwnableTransferable {
 
     receive(msg: CreateMarket) {
         require(msg.endTime > now(), "End time must be in the future");
-        require(msg.numOutcomes > 1, "Number of outcomes must be greater than 1");
+        require(!msg.outcomes.isEmpty(), "Should be more tham 1 outcomes");
+        require(msg.numOutcomes >= 0, "Should be more tham 1 outcomes");
         require(msg.eventDescription != "", "Event description has must be provided");
         //require(msg.eventDescription.length() < 100, "Event description must be less than 100 characters");
-        //requireOwner();
+        self.requireOwner();
 
-        // TODO: move to separate function
-        let initState: StateInit = initOf PredictionMarket(myAddress(), msg.eventDescription, msg.endTime, sender(), msg.numOutcomes);
+        let preMarketContractAddress: Address = self.deployPredictionMarket(msg.eventDescription, msg.endTime, msg.outcomes, msg.numOutcomes);
+        
+        // pay-back remaining gas
+        self.reply(CreateMarketResponse{address: preMarketContractAddress}.toCell());
+    }
+
+    fun deployPredictionMarket(eventDescription: String, endTime: Int, outcomes: map<Int as uint8, Outcomes>, numOutcomes: Int): Address {
+        let initState: StateInit = initOf PredictionMarket(myAddress(), sender(), eventDescription, endTime, outcomes, numOutcomes);
         let preMarketContractAddress: Address = contractAddress(initState);
         send(SendParameters{
             to: preMarketContractAddress,
@@ -30,8 +37,6 @@ contract MarketFactory with Deployable, OwnableTransferable {
             data: initState.data,
             body: "deploy".asComment()
         });
-
-        // pay-back remaining gas
-        self.reply(CreateMarketResponse{address: preMarketContractAddress}.toCell());
+        return preMarketContractAddress;
     }
 }

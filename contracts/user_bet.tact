@@ -2,20 +2,20 @@ import "@stdlib/deploy";
 import "./messages.tact";
 
 contract UserBet with Deployable {
-    user: Address;
-    market: Address;
+    owner: Address;
+    parent: Address;
     betAmount: Int as uint64;
     outcome: Int as int8;
 
-    init(user: Address, market: Address) {
-        self.user = user;
-        self.market = market;
+    init(owner: Address, parent: Address) {
+        self.owner = owner;
+        self.parent = parent;
         self.betAmount = 0;
-        self.outcome = -1; // Default to no outcome
+        self.outcome = -1;
     }
 
     receive(msg: PlaceBetInternal) {
-        receive(sender() == self.market, "Only the market can place a bet")
+        require(sender() == self.parent, "Only the market can place a bet");
         require(self.outcome == -1, "Bet already placed");
         self.outcome = msg.outcome;
 
@@ -26,11 +26,11 @@ contract UserBet with Deployable {
     }
 
     // receive("claimWinnings") {
-    //     require(PredictionMarket(self.market).isResolved(), "Market not resolved");
+    //     require(PredictionMarket(self.parent).isResolved(), "Market not resolved");
 
-    //     let actualOutcome = PredictionMarket(self.market).resolvedOutcome();
+    //     let actualOutcome = PredictionMarket(self.parent).resolvedOutcome();
     //     if (self.outcome == actualOutcome) {
-    //         let totalPool = PredictionMarket(self.market).totalPool();
+    //         let totalPool = PredictionMarket(self.parent).totalPool();
     //         let userShare = (self.betAmount * totalPool) / PredictionMarket(self.market).totalBetForOutcome(self.outcome);
     //         self.user.transfer(userShare);
     //     } else {

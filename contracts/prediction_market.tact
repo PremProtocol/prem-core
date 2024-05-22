@@ -7,19 +7,22 @@ contract PredictionMarket with Deployable {
     eventDescription: String;
     endTime: Int as uint64;
     resolved: Bool;
-    outcome: Int as int8;
+    outcome: Int as uint8;
+    outcomes: map<Int as uint8, Outcomes>;
     numOutcomes: Int as uint8;
     totalBets: map<Int as uint8, Int as uint64>; // Map to store bets for each outcome
     totalPool: Int as uint64;
 
     init(parent: Address, 
+            creator: Address,
             eventDescription: String, 
             endTime: Int, 
-            creator: Address,
+            outcomes: map<Int as uint8, Outcomes>,
             numOutcomes: Int) {
         self.creator = creator;
         self.eventDescription = eventDescription;
         self.endTime = endTime;
+        self.outcomes = outcomes;
         self.numOutcomes = numOutcomes;
         self.resolved = false;
         self.outcome = -1; // No outcome resolved yet
@@ -32,21 +35,14 @@ contract PredictionMarket with Deployable {
 
         let currentBet: Int = self.totalBets.get(msg.outcome)!!;
 
-        // here is maybe wrong because there is no value for gas cost
-        self.totalBets.set(msg.outcome, currentBet + context().value);
-        self.totalPool += context().value;
+        let newBetAmount: Int = context().value - ton("0.02"); // left some coins for gas cost
+        self.totalBets.set(msg.outcome, currentBet + newBetAmount);
+        self.totalPool += newBetAmount;
 
         // TODO: move to separate function
-        let userBetInitState: StateInit = initOf UserBet(sender(), myAddress());
-        let userBetAddress: Address = contractAddress(userBetInitState);
-        send(SendParameters{
-            to: userBetAddress,
-            value: context().value,
-            mode: SendIgnoreErrors,
-            code: userBetInitState.code,
-            data: userBetInitState.data,
-            body: PlaceBetInternal{outcome: msg.outcome}.toCell()
-        });
+        self.deployUserBet(sender(), myAddress(), newBetAmount, msg.outcome);
+
+        // TODO: reply to return gas cost???
     }
 
     receive(msg: ResolveMarket) {
@@ -57,6 +53,26 @@ contract PredictionMarket with Deployable {
 
         self.resolved = true;
         self.outcome = msg.outcome;
+
+        // pay-back remaining gas
+        self.reply("gas returned".asComment());
+    }
+
+    bounced(src: Slice) {
+        // ...
+    }
+
+    fun deployUserBet(owner: Address, parent: Address, betAmount: Int, outcome: Int) {
+        let userBetInitState: StateInit = initOf UserBet(owner, parent);
+        let userBetAddress: Address = contractAddress(userBetInitState);
+        send(SendParameters{
+            to: userBetAddress,
+            value: betAmount,
+            mode: SendIgnoreErrors,
+            code: userBetInitState.code,
+            data: userBetInitState.data,
+            body: PlaceBetInternal{outcome: outcome}.toCell()
+        });
     }
 
     get fun totalPool(): Int {
