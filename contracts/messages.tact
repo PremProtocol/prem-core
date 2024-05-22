@@ -14,26 +14,26 @@ message CreateMarket {
 
 // PredictionMarket Messages
 message PlaceBet {
-    outcome: Int as uint8;
+    outcome: Int as int8;
 }
 
 message ResolveMarket {
-    outcome: Int as uint8;
+    outcome: Int as int8;
 }
 
 message ClaimWinningsInfo {
     betAmount: Int as uint64;
     userBet: Address;
-    outcome: Int as uint8;
+    outcome: Int as int8;
 }
 
 // UserBet Messages
 message PlaceBetInternal {
-    outcome: Int as uint8;
+    outcome: Int as int8;
 }
 
 message UserBetInfo{
-    outcome: Int as uint8;
+    outcome: Int as int8;
     betAmount: Int as uint64;
 }
 

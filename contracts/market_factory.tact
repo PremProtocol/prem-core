@@ -28,7 +28,7 @@ contract MarketFactory with Deployable, OwnableTransferable {
     }
 
     fun deployPredictionMarket(eventDescription: String, endTime: Int, outcomeName1: String, outcomeName2: String, numOutcomes: Int): Address {
-        let initState: StateInit = initOf PredictionMarket(myAddress(), sender(), eventDescription, endTime, outcomeName1, outcomeName2, numOutcomes);
+        let initState: StateInit = initOf PredictionMarket(sender(), myAddress(), eventDescription, endTime, outcomeName1, outcomeName2, numOutcomes);
         let preMarketContractAddress: Address = contractAddress(initState);
         send(SendParameters{
             to: preMarketContractAddress,

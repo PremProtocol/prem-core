@@ -14,10 +14,10 @@ describe('PredictionMarket', () => {
         blockchain = await Blockchain.create();
         deployer = await blockchain.treasury('deployer');
         marketFactory = blockchain.openContract(await MarketFactory.fromInit());
-        predictionMarket = blockchain.openContract(await PredictionMarket.fromInit(marketFactory.address, 
-            deployer.address,
+        predictionMarket = blockchain.openContract(await PredictionMarket.fromInit(deployer.address,
+            marketFactory.address,
             "New Market", 
-            BigInt(Date.now() + 60), 
+            BigInt(Date.now()), 
             "outcomeName 1",
             "outcomeName 2",
             2n));
@@ -46,8 +46,9 @@ describe('PredictionMarket', () => {
         // blockchain and mainContract are ready to use 
     });
 
+    //broken because of the error: changing time
     it('should resolve market correctly', async () => {
-      blockchain.now = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+      blockchain.now = Math.floor(Date.now() / 1000) + 2 * 24 * 60 * 60;
 
       const resolveMarketResult = await predictionMarket.send(deployer.getSender(), {
         value: toNano('0.2')
@@ -62,8 +63,8 @@ describe('PredictionMarket', () => {
           success: true,
       });
 
-      const resolvedOutcome = await predictionMarket.getResolvedOutcome();
-      expect(resolvedOutcome).toEqual(1n);
+    const resolvedOutcome = await predictionMarket.getResolvedOutcome();
+    expect(resolvedOutcome).toEqual(1n);
     });
 
     it('should not resolve market before event end', async () => {

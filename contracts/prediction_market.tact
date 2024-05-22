@@ -3,25 +3,27 @@ import "./user_bet.tact";
 import "./messages.tact";
 
 contract PredictionMarket with Deployable {
-    creator: Address;
+    parent: Address;
+    owner: Address;
     eventDescription: String;
     endTime: Int as uint64;
     resolved: Bool;
-    outcome: Int as uint8;
+    outcome: Int as int8;
     outcomeName1: String;
     outcomeName2: String;
     numOutcomes: Int as uint8;
     totalOutcomeBets: map<Int as uint8, Int as uint64>; // Map to store bets for each outcome
     totalPool: Int as uint64;
 
-    init(parent: Address, 
-            creator: Address,
+    init(owner: Address,
+            parent: Address, 
             eventDescription: String, 
             endTime: Int, 
             outcomeName1: String,
             outcomeName2: String,
             numOutcomes: Int) {
-        self.creator = creator;
+        self.owner = owner;
+        self.parent = parent;
         self.eventDescription = eventDescription;
         self.endTime = endTime;
         self.outcomeName1 = outcomeName1;
@@ -46,16 +48,19 @@ contract PredictionMarket with Deployable {
     }
 
     receive(msg: ResolveMarket) {
-        // require(sender() == self.creator, "Only creator can resolve market");
-        // require(now() >= self.endTime, "Event has not ended");
-        // require(!self.resolved, "Market already resolved");
-        // require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
+        require(sender() == self.owner, "Only owner can resolve market");
+        dump(now());
+        dump(self.endTime);
+        dump(now() >= self.endTime);
+        require(now() >= self.endTime, "Event has not ended");
+        require(!self.resolved, "Market already resolved");
+        require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
 
         self.resolved = true;
         self.outcome = msg.outcome;
 
         // pay-back remaining gas
-        //self.reply("gas returned".asComment());
+        self.reply("gas returned".asComment());
     }
 
     receive(msg: ClaimWinningsInfo) {
