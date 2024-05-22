@@ -50,6 +50,7 @@ contract PredictionMarket with Deployable {
     }
 
     receive(msg: ResolveMarket) {
+        require(sender() == self.creator, "Only creator can resolve market");
         require(now() >= self.endTime, "Event has not ended");
         require(!self.resolved, "Market already resolved");
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
