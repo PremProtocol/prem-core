@@ -14,6 +14,8 @@ Prediction Market: A platform where users can bet on the outcomes of future even
 
 ### Market Factory Contract:
 
+Testnet Address: EQA7tmETnai0kxuXf2POMneCVJMX_DhOVr0-YiM9pilV-hFi
+
 Creates new prediction markets.
 Keeps a registry of all active and past markets.
 

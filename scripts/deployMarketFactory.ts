@@ -3,9 +3,9 @@ import { MarketFactory } from '../wrappers/MarketFactory';
 import { NetworkProvider } from '@ton/blueprint';
 
 export async function run(provider: NetworkProvider) {
-    const mainContract = provider.open(await MarketFactory.fromInit());
+    const marketFactory = provider.open(await MarketFactory.fromInit());
 
-    await mainContract.send(
+    await marketFactory.send(
         provider.sender(),
         {
             value: toNano('0.05'),
@@ -16,7 +16,7 @@ export async function run(provider: NetworkProvider) {
         }
     );
 
-    await provider.waitForDeploy(mainContract.address);
+    await provider.waitForDeploy(marketFactory.address);
 
-    // run methods on `mainContract`
+    // run methods on `marketFactory`
 }
