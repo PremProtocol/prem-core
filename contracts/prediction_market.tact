@@ -3,8 +3,9 @@ import "./user_bet.tact";
 import "./messages.tact";
 
 contract PredictionMarket with Deployable {
-    parent: Address;
     owner: Address;
+    parent: Address;
+    seqno: Int as uint64;
     eventDescription: String;
     endTime: Int as uint64;
     resolved: Bool;
@@ -15,23 +16,29 @@ contract PredictionMarket with Deployable {
     totalOutcomeBets: map<Int as uint8, Int as uint64>; // Map to store bets for each outcome
     totalPool: Int as uint64;
 
-    init(owner: Address,
-            parent: Address, 
-            eventDescription: String, 
-            endTime: Int, 
-            outcomeName1: String,
-            outcomeName2: String,
-            numOutcomes: Int) {
-        self.owner = owner;
+    init(parent: Address, 
+            seqno: Int) {
+        self.owner = newAddress(0, 0);
         self.parent = parent;
-        self.eventDescription = eventDescription;
-        self.endTime = endTime;
-        self.outcomeName1 = outcomeName1;
-        self.outcomeName2 = outcomeName2;
-        self.numOutcomes = numOutcomes;
+        self.seqno = seqno;
+        self.eventDescription = "";
+        self.endTime = 0;
+        self.outcomeName1 = "";
+        self.outcomeName2 = "";
+        self.numOutcomes = 0;
         self.resolved = false;
-        self.outcome = -1; // No outcome resolved yet
+        self.outcome = -1;
         self.totalPool = 0;
+    }
+
+    receive(msg: MarketInitialize) {
+        require(sender() == self.parent, "Only parent contract can init the market");
+        self.owner = msg.owner;
+        self.eventDescription = msg.eventDescription;
+        self.endTime = msg.endTime;
+        self.outcomeName1 = msg.outcomeName1;
+        self.outcomeName2 = msg.outcomeName2;
+        self.numOutcomes = msg.numOutcomes;
     }
 
     receive(msg: PlaceBet) {

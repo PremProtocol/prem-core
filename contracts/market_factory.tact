@@ -7,9 +7,11 @@ import "./messages.tact";
 // https://github.com/tact-lang/tact/blob/main/stdlib/libs/deploy.tact
 contract MarketFactory with Deployable, OwnableTransferable {
     owner: Address;
+    predictionMarketCount: Int as uint64;
 
     init() {
         self.owner = sender();
+        self.predictionMarketCount = 0;
     }
 
     receive(msg: CreateMarket) {
@@ -21,22 +23,31 @@ contract MarketFactory with Deployable, OwnableTransferable {
         //require(msg.eventDescription.length() < 100, "Eventoutcomes description must be less than 100 characters");
         self.requireOwner();
 
-        let preMarketContractAddress: Address = self.deployPredictionMarket(msg.eventDescription, msg.endTime, msg.outcomeName1, msg.outcomeName2, msg.numOutcomes);
-        
-        // returning all excess
-        self.reply(CreateMarketResponse{address: preMarketContractAddress}.toCell());
-    }
-
-    fun deployPredictionMarket(eventDescription: String, endTime: Int, outcomeName1: String, outcomeName2: String, numOutcomes: Int): Address {
-        let initState: StateInit = initOf PredictionMarket(sender(), myAddress(), eventDescription, endTime, outcomeName1, outcomeName2, numOutcomes);
+        let initState: StateInit = initOf PredictionMarket(myAddress(), self.predictionMarketCount);
         let preMarketContractAddress: Address = contractAddress(initState);
         send(SendParameters{
             to: preMarketContractAddress,
-            value: ton("0.3"),
+            value: ton("0.03"),
             mode: SendIgnoreErrors,
             code: initState.code,
-            data: initState.data
+            data: initState.data,
+            body: MarketInitialize{owner: sender(),
+                                    eventDescription: msg.eventDescription, 
+                                    endTime: msg.endTime, 
+                                    outcomeName1: msg.outcomeName1, 
+                                    outcomeName2: msg.outcomeName2, 
+                                    numOutcomes: msg.numOutcomes}.toCell()
         });
+
+        self.predictionMarketCount += 1;
+        
+        // returning all excess, seems like after send transaction execution finished
+        //self.notify(CreateMarketResponse{address: preMarketContractAddress}.toCell());
+    }
+
+    get fun childAddress(seqno: Int): Address {
+        let initState: StateInit = initOf PredictionMarket(myAddress(), seqno);
+        let preMarketContractAddress: Address = contractAddress(initState);
         return preMarketContractAddress;
     }
 }
