@@ -1,0 +1,10 @@
+{
+  "projects": [
+    {
+      "name": "market_factory",
+      "options": {
+        "debug": true
+      }
+    }
+  ]
+}
