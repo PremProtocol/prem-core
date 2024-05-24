@@ -37,6 +37,20 @@ message ClaimWinningsInfo {
     outcome: Int as int8;
 }
 
+message PredictionMarketDetails {
+    owner: Address;
+    eventDescription: String;
+    endTime: Int as uint64;
+    // need to rewrite it to map, but luck of examples/tools
+    outcomeName1: String;
+    outcomeName2: String;
+    numOutcomes: Int as uint8;
+    totalOutcomeBets: map<Int as uint8, Int as uint64>;
+    totalPool: Int as uint64;
+    outcome: Int as int8;
+    resolved: Bool;
+}
+
 // UserBet Messages
 message PlaceBetInternal {
     outcome: Int as int8;

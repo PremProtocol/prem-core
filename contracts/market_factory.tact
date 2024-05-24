@@ -50,4 +50,8 @@ contract MarketFactory with Deployable, OwnableTransferable {
         let preMarketContractAddress: Address = contractAddress(initState);
         return preMarketContractAddress;
     }
+
+    get fun predictionMarketCount(): Int {
+        return self.predictionMarketCount;
+    }
 }

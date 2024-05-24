@@ -105,6 +105,20 @@ contract PredictionMarket with Deployable {
         });
     }
 
+    get fun predictionMarketDetails(): PredictionMarketDetails {
+        return PredictionMarketDetails{owner: self.owner,
+            eventDescription: self.eventDescription,
+            endTime: self.endTime,
+            outcomeName1: self.outcomeName1,
+            outcomeName2: self.outcomeName2,
+            numOutcomes: self.numOutcomes,
+            totalOutcomeBets: self.totalOutcomeBets,
+            totalPool: self.totalPool,
+            resolved: self.resolved,
+            outcome: self.outcome
+        };
+    }
+
     get fun totalPool(): Int {
         return self.totalPool;
     }
