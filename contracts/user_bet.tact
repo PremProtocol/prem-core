@@ -15,15 +15,14 @@ contract UserBet with Deployable {
     }
 
     receive(msg: PlaceBetInternal) {
-        require(sender() == self.parent, "Only the market can place a bet");
+        //require(sender() == self.parent, "Only the market can place a bet");
         require(self.outcome == -1, "Bet already placed");
         self.outcome = msg.outcome;
-
         //TODO: Think about adding more than one bet in future
-        self.betAmount = context().value;
+        self.betAmount = msg.betAmount;
 
         //TODO: Gas refund if bet is not placed
-        self.reply("gas returned".asComment());
+        //self.reply("gas returned".asComment());
     }
 
     receive("claimWinnings") {

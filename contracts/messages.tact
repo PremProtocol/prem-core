@@ -54,6 +54,7 @@ message PredictionMarketDetails {
 // UserBet Messages
 message PlaceBetInternal {
     outcome: Int as int8;
+    betAmount: Int as uint64;
 }
 
 message UserBetInfo{

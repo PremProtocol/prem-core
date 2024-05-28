@@ -39,6 +39,8 @@ contract PredictionMarket with Deployable {
         self.outcomeName1 = msg.outcomeName1;
         self.outcomeName2 = msg.outcomeName2;
         self.numOutcomes = msg.numOutcomes;
+        self.totalOutcomeBets.set(0, 0);
+        self.totalOutcomeBets.set(1, 0);
     }
 
     receive(msg: PlaceBet) {
@@ -46,8 +48,8 @@ contract PredictionMarket with Deployable {
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
 
         let currentBet: Int = self.totalOutcomeBets.get(msg.outcome)!!;
-        let newBetAmount: Int = context().value - ton("0.02"); // left some coins for gas cost
-        self.totalOutcomeBets.set(msg.outcome, currentBet + newBetAmount);
+        let newBetAmount: Int = context().value - ton("0.05"); // left some coins for gas cost
+        self.totalOutcomeBets.set(msg.outcome, 0 + newBetAmount);
         self.totalPool += newBetAmount;
 
         // TODO: move to separate function
@@ -97,11 +99,11 @@ contract PredictionMarket with Deployable {
         let userBetAddress: Address = contractAddress(userBetInitState);
         send(SendParameters{
             to: userBetAddress,
-            value: ton("0.02"),
+            value: betAmount,
             mode: SendIgnoreErrors,
             code: userBetInitState.code,
             data: userBetInitState.data,
-            body: PlaceBetInternal{outcome: outcome}.toCell()
+            body: PlaceBetInternal{outcome: outcome, betAmount: betAmount}.toCell()
         });
     }
 
