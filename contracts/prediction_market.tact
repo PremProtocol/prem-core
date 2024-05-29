@@ -3,6 +3,7 @@ import "./user_bet.tact";
 import "./messages.tact";
 
 contract PredictionMarket with Deployable {
+    const MinTonForStorage: Int = ton("0.02");
     owner: Address;
     parent: Address;
     seqno: Int as uint64;
@@ -33,6 +34,12 @@ contract PredictionMarket with Deployable {
 
     receive(msg: MarketInitialize) {
         require(sender() == self.parent, "Only parent contract can init the market");
+        require(msg.endTime > now(), "End time must be in the future");
+        require(msg.outcomeName1 != "", "Outcome names must be provided");
+        require(msg.outcomeName2 != "", "Outcome names must be provided");
+        require(msg.numOutcomes == 2, "Should be only 2 outcomes");
+        require(msg.eventDescription != "", "Event description has must be provided");
+        
         self.owner = msg.owner;
         self.eventDescription = msg.eventDescription;
         self.endTime = msg.endTime;
@@ -41,6 +48,14 @@ contract PredictionMarket with Deployable {
         self.numOutcomes = msg.numOutcomes;
         self.totalOutcomeBets.set(0, 0);
         self.totalOutcomeBets.set(1, 0);
+
+        // pay-back remaining gas
+        send(SendParameters{
+            to: self.owner,
+            value: context().value - self.MinTonForStorage,
+            mode: SendIgnoreErrors,
+            body: "refund".asComment()
+        });
     }
 
     receive(msg: PlaceBet) {
@@ -48,19 +63,15 @@ contract PredictionMarket with Deployable {
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
 
         let currentBet: Int = self.totalOutcomeBets.get(msg.outcome)!!;
-        let newBetAmount: Int = context().value - ton("0.05"); // left some coins for gas cost
+        let newBetAmount: Int = context().value - ton("0.03"); // left some coins for gas cost
         self.totalOutcomeBets.set(msg.outcome, 0 + newBetAmount);
         self.totalPool += newBetAmount;
 
-        // TODO: move to separate function
         self.placeUserBet(sender(), myAddress(), newBetAmount, msg.outcome);
     }
 
     receive(msg: ResolveMarket) {
         require(sender() == self.owner, "Only owner can resolve market");
-        dump(now());
-        dump(self.endTime);
-        dump(now() >= self.endTime);
         require(now() >= self.endTime, "Event has not ended");
         require(!self.resolved, "Market already resolved");
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
@@ -81,12 +92,12 @@ contract PredictionMarket with Deployable {
             let userShare: Int = (msg.betAmount * self.totalPool) / self.totalOutcomeBets.get(msg.outcome)!!;
             send(SendParameters{
                 to: msg.userBet,
-                value: ton("0.02"), // userShare to currency
-                mode: SendIgnoreErrors,
+                value: userShare,
+                mode: SendRemainingValue | SendIgnoreErrors,
                 body: "claimWinningsInternal".asComment()
             });
         } else {
-            // TODO: descroy the user bet contract
+            // TODO: destroy the user bet contract
         }
     }
 
@@ -99,7 +110,7 @@ contract PredictionMarket with Deployable {
         let userBetAddress: Address = contractAddress(userBetInitState);
         send(SendParameters{
             to: userBetAddress,
-            value: betAmount,
+            value: ton("0.03"),
             mode: SendIgnoreErrors,
             code: userBetInitState.code,
             data: userBetInitState.data,

@@ -45,6 +45,10 @@ contract MarketFactory with Deployable, OwnableTransferable {
         //self.notify(CreateMarketResponse{address: preMarketContractAddress}.toCell());
     }
 
+    bounced(src: Slice) {
+        // ...
+    }
+
     get fun childAddress(seqno: Int): Address {
         let initState: StateInit = initOf PredictionMarket(myAddress(), seqno);
         let preMarketContractAddress: Address = contractAddress(initState);

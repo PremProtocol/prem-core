@@ -2,6 +2,7 @@ import "@stdlib/deploy";
 import "./messages.tact";
 
 contract UserBet with Deployable {
+    const MinTonForStorage: Int = ton("0.01");
     owner: Address;
     parent: Address;
     betAmount: Int as uint64;
@@ -21,8 +22,13 @@ contract UserBet with Deployable {
         //TODO: Think about adding more than one bet in future
         self.betAmount = msg.betAmount;
 
-        //TODO: Gas refund if bet is not placed
-        //self.reply("gas returned".asComment());
+        // Transfer the bet amount to the contract
+        send(SendParameters{
+            to: self.owner,
+            value: context().value - self.MinTonForStorage,
+            mode: SendIgnoreErrors,
+            body: "refund".asComment()
+        });
     }
 
     receive("claimWinnings") {
@@ -30,7 +36,7 @@ contract UserBet with Deployable {
 
         send(SendParameters{
             to: self.parent,
-            value: ton("0.02"),
+            value: ton("0.04"),
             mode: SendIgnoreErrors,
             body: ClaimWinningsInfo{
                 outcome: self.outcome,
@@ -45,8 +51,12 @@ contract UserBet with Deployable {
         send(SendParameters{
             to: self.owner,
             value: 0,
-            mode: SendRemainingBalance | SendDestroyIfZero | SendIgnoreErrors,
+            mode: SendRemainingBalance | SendRemainingValue | SendDestroyIfZero | SendIgnoreErrors,
         });
+    }
+
+    bounced(src: Slice) {
+        // ...
     }
 
     get fun userBet(): UserBetInfo {
