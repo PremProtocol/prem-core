@@ -6,6 +6,7 @@ import "./messages.tact";
 // FactoryDeployable for cashback???
 // https://github.com/tact-lang/tact/blob/main/stdlib/libs/deploy.tact
 contract MarketFactory with Deployable, OwnableTransferable {
+    const MinTonForStorage: Int = ton("0.02");
     owner: Address;
     predictionMarketCount: Int as uint64;
 
@@ -25,28 +26,26 @@ contract MarketFactory with Deployable, OwnableTransferable {
 
         let initState: StateInit = initOf PredictionMarket(myAddress(), self.predictionMarketCount);
         let preMarketContractAddress: Address = contractAddress(initState);
-        send(SendParameters{
-            to: preMarketContractAddress,
-            value: ton("0.03"),
-            mode: SendIgnoreErrors,
-            code: initState.code,
-            data: initState.data,
-            body: MarketInitialize{owner: sender(),
-                                    eventDescription: msg.eventDescription, 
-                                    endTime: msg.endTime, 
-                                    outcomeName1: msg.outcomeName1, 
-                                    outcomeName2: msg.outcomeName2, 
-                                    numOutcomes: msg.numOutcomes}.toCell()
-        });
-
         self.predictionMarketCount += 1;
-        
-        // returning all excess, seems like after send transaction execution finished
-        //self.notify(CreateMarketResponse{address: preMarketContractAddress}.toCell());
-    }
 
-    bounced(src: Slice) {
-        // ...
+        let messageValue: Int = context().value;
+        if(myBalance() < self.MinTonForStorage) {
+            messageValue = context().value - self.MinTonForStorage;
+        }
+
+        send(SendParameters{
+                to: preMarketContractAddress,
+                value: messageValue,
+                mode: SendIgnoreErrors,
+                code: initState.code,
+                data: initState.data,
+                body: MarketInitialize{owner: sender(),
+                            eventDescription: msg.eventDescription, 
+                            endTime: msg.endTime, 
+                            outcomeName1: msg.outcomeName1, 
+                            outcomeName2: msg.outcomeName2, 
+                            numOutcomes: msg.numOutcomes}.toCell()
+        });
     }
 
     get fun childAddress(seqno: Int): Address {

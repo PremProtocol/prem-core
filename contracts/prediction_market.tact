@@ -50,12 +50,14 @@ contract PredictionMarket with Deployable {
         self.totalOutcomeBets.set(1, 0);
 
         // pay-back remaining gas
-        send(SendParameters{
-            to: self.owner,
-            value: context().value - self.MinTonForStorage,
-            mode: SendIgnoreErrors,
-            body: "refund".asComment()
-        });
+        if (context().value > self.MinTonForStorage) {
+            send(SendParameters{
+                to: self.owner,
+                value: context().value - self.MinTonForStorage,
+                mode: SendIgnoreErrors,
+                body: "refund".asComment()
+            });
+        }
     }
 
     receive(msg: PlaceBet) {
@@ -110,7 +112,7 @@ contract PredictionMarket with Deployable {
         let userBetAddress: Address = contractAddress(userBetInitState);
         send(SendParameters{
             to: userBetAddress,
-            value: ton("0.03"),
+            value: ton("0.025"),
             mode: SendIgnoreErrors,
             code: userBetInitState.code,
             data: userBetInitState.data,

@@ -7,12 +7,14 @@ contract UserBet with Deployable {
     parent: Address;
     betAmount: Int as uint64;
     outcome: Int as int8;
+    isClaimed: Bool;
 
     init(owner: Address, parent: Address) {
         self.owner = owner;
         self.parent = parent;
         self.betAmount = 0;
         self.outcome = -1;
+        self.isClaimed = false;
     }
 
     receive(msg: PlaceBetInternal) {
@@ -33,10 +35,11 @@ contract UserBet with Deployable {
 
     receive("claimWinnings") {
         require(sender() == self.owner, "Only the owner can claim winnings");
+        require(self.isClaimed == false, "Winnings already claimed");
 
         send(SendParameters{
             to: self.parent,
-            value: ton("0.04"),
+            value: ton("0.02"),
             mode: SendIgnoreErrors,
             body: ClaimWinningsInfo{
                 outcome: self.outcome,
@@ -47,7 +50,9 @@ contract UserBet with Deployable {
 
     receive("claimWinningsInternal") {
         require(sender() == self.parent, "Only the market can call this function");
+        require(self.isClaimed == false, "Winnings already claimed");
         
+        self.isClaimed = true;
         send(SendParameters{
             to: self.owner,
             value: 0,
