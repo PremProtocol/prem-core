@@ -28,9 +28,9 @@ contract MarketFactory with Deployable, OwnableTransferable {
         let preMarketContractAddress: Address = contractAddress(initState);
         self.predictionMarketCount += 1;
 
-        let messageValue: Int = context().value;
+        let messageValue: Int = context().value - ton("0.02");
         if(myBalance() < self.MinTonForStorage) {
-            messageValue = context().value - self.MinTonForStorage;
+            messageValue = messageValue - self.MinTonForStorage;
         }
 
         send(SendParameters{

@@ -86,21 +86,19 @@ contract PredictionMarket with Deployable {
     }
 
     receive(msg: ClaimWinningsInfo) {
-        require(sender() == msg.userBet, "Only owner can claim winnings");
         require(self.resolved, "Market should be resolved to claim winnings");
         require(self.outcome == msg.outcome, "Outcome does not match the bet outcome");
-
-        if (self.outcome == msg.outcome){
-            let userShare: Int = (msg.betAmount * self.totalPool) / self.totalOutcomeBets.get(msg.outcome)!!;
-            send(SendParameters{
-                to: msg.userBet,
-                value: userShare,
-                mode: SendRemainingValue | SendIgnoreErrors,
-                body: "claimWinningsInternal".asComment()
-            });
-        } else {
-            // TODO: destroy the user bet contract
-        }
+        let userBetInitState: StateInit = initOf UserBet(msg.walletAddress, myAddress());
+        let userBetAddress: Address = contractAddress(userBetInitState);
+        require(sender() == userBetAddress, "Only owner can claim winnings");
+        
+        let userShare: Int = (msg.betAmount * self.totalPool) / self.totalOutcomeBets.get(msg.outcome)!!;
+        send(SendParameters{
+            to: sender(),
+            value: userShare,
+            mode: SendRemainingValue | SendIgnoreErrors,
+            body: "claimWinningsInternal".asComment()
+        });
     }
 
     bounced(src: Slice) {

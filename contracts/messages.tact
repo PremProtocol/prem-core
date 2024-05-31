@@ -33,7 +33,7 @@ message ResolveMarket {
 
 message ClaimWinningsInfo {
     betAmount: Int as uint64;
-    userBet: Address;
+    walletAddress: Address;
     outcome: Int as int8;
 }
 

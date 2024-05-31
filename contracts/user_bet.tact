@@ -39,24 +39,25 @@ contract UserBet with Deployable {
 
         send(SendParameters{
             to: self.parent,
-            value: ton("0.02"),
-            mode: SendIgnoreErrors,
+            value: 0,
+            mode: SendRemainingValue | SendIgnoreErrors,
             body: ClaimWinningsInfo{
                 outcome: self.outcome,
                 betAmount: self.betAmount,
-                userBet: myAddress()}.toCell()
+                walletAddress: sender()}.toCell()
         });
     }
 
     receive("claimWinningsInternal") {
         require(sender() == self.parent, "Only the market can call this function");
         require(self.isClaimed == false, "Winnings already claimed");
-        
+
         self.isClaimed = true;
         send(SendParameters{
             to: self.owner,
             value: 0,
-            mode: SendRemainingBalance | SendRemainingValue | SendDestroyIfZero | SendIgnoreErrors,
+            mode: SendRemainingValue | SendIgnoreErrors,
+            body: "winning".asComment()
         });
     }
 
