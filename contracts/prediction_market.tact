@@ -8,13 +8,14 @@ contract PredictionMarket with Deployable {
     parent: Address;
     seqno: Int as uint64;
     eventDescription: String;
+    eventType: String;
     endTime: Int as uint64;
     resolved: Bool;
     outcome: Int as int8;
     outcomeName1: String;
     outcomeName2: String;
     numOutcomes: Int as uint8;
-    totalOutcomeBets: map<Int as uint8, Int as uint64>; // Map to store bets for each outcome
+    totalOutcomeBets: map<Int as uint8, Int as uint64>;
     totalPool: Int as uint64;
 
     init(parent: Address, 
@@ -23,6 +24,7 @@ contract PredictionMarket with Deployable {
         self.parent = parent;
         self.seqno = seqno;
         self.eventDescription = "";
+        self.eventType = "";
         self.endTime = 0;
         self.outcomeName1 = "";
         self.outcomeName2 = "";
@@ -39,9 +41,11 @@ contract PredictionMarket with Deployable {
         require(msg.outcomeName2 != "", "Outcome names must be provided");
         require(msg.numOutcomes == 2, "Should be only 2 outcomes");
         require(msg.eventDescription != "", "Event description has must be provided");
+        require(msg.eventType != "", "Event type has must be provided");
         
         self.owner = msg.owner;
         self.eventDescription = msg.eventDescription;
+        self.eventType = msg.eventType;
         self.endTime = msg.endTime;
         self.outcomeName1 = msg.outcomeName1;
         self.outcomeName2 = msg.outcomeName2;
@@ -96,7 +100,7 @@ contract PredictionMarket with Deployable {
         send(SendParameters{
             to: sender(),
             value: userShare,
-            mode: SendRemainingValue | SendIgnoreErrors,
+            mode: SendRemainingValue + SendIgnoreErrors,
             body: "claimWinningsInternal".asComment()
         });
     }
@@ -121,6 +125,7 @@ contract PredictionMarket with Deployable {
     get fun predictionMarketDetails(): PredictionMarketDetails {
         return PredictionMarketDetails{owner: self.owner,
             eventDescription: self.eventDescription,
+            eventType: self.eventType,
             endTime: self.endTime,
             outcomeName1: self.outcomeName1,
             outcomeName2: self.outcomeName2,

@@ -40,7 +40,7 @@ contract UserBet with Deployable {
         send(SendParameters{
             to: self.parent,
             value: 0,
-            mode: SendRemainingValue | SendIgnoreErrors,
+            mode: SendRemainingValue + SendIgnoreErrors,
             body: ClaimWinningsInfo{
                 outcome: self.outcome,
                 betAmount: self.betAmount,
@@ -56,7 +56,7 @@ contract UserBet with Deployable {
         send(SendParameters{
             to: self.owner,
             value: 0,
-            mode: SendRemainingValue | SendIgnoreErrors,
+            mode: SendRemainingBalance + SendIgnoreErrors,
             body: "winning".asComment()
         });
     }

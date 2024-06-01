@@ -5,6 +5,7 @@ message CreateMarketResponse {
 
 message CreateMarket {
     eventDescription: String;
+    eventType: String;
     endTime: Int as uint64;
     // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;
@@ -16,6 +17,7 @@ message CreateMarket {
 message MarketInitialize {
     owner: Address;
     eventDescription: String;
+    eventType: String;
     endTime: Int as uint64;
     // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;
@@ -40,6 +42,7 @@ message ClaimWinningsInfo {
 message PredictionMarketDetails {
     owner: Address;
     eventDescription: String;
+    eventType: String;
     endTime: Int as uint64;
     // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;

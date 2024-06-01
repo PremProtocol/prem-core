@@ -21,6 +21,7 @@ contract MarketFactory with Deployable, OwnableTransferable {
         require(msg.outcomeName2 != "", "Outcome names must be provided");
         require(msg.numOutcomes == 2, "Should be only 2 outcomes");
         require(msg.eventDescription != "", "Event description has must be provided");
+        require(msg.eventType != "", "Event type has must be provided");
         //require(msg.eventDescription.length() < 100, "Eventoutcomes description must be less than 100 characters");
         self.requireOwner();
 
@@ -41,6 +42,7 @@ contract MarketFactory with Deployable, OwnableTransferable {
                 data: initState.data,
                 body: MarketInitialize{owner: sender(),
                             eventDescription: msg.eventDescription, 
+                            eventType: msg.eventType,
                             endTime: msg.endTime, 
                             outcomeName1: msg.outcomeName1, 
                             outcomeName2: msg.outcomeName2, 
