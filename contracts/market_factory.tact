@@ -3,8 +3,6 @@ import "@stdlib/ownable";
 import "./prediction_market.tact";
 import "./messages.tact";
 
-// FactoryDeployable for cashback???
-// https://github.com/tact-lang/tact/blob/main/stdlib/libs/deploy.tact
 contract MarketFactory with Deployable, OwnableTransferable {
     const MinTonForStorage: Int = ton("0.02");
     owner: Address;
@@ -29,7 +27,7 @@ contract MarketFactory with Deployable, OwnableTransferable {
         let preMarketContractAddress: Address = contractAddress(initState);
         self.predictionMarketCount += 1;
 
-        let messageValue: Int = context().value - ton("0.02");
+        let messageValue: Int = context().value - ton("0.02"); // for operations gas
         if(myBalance() < self.MinTonForStorage) {
             messageValue = messageValue - self.MinTonForStorage;
         }

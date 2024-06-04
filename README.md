@@ -1,7 +1,6 @@
-# prem
+# Project Title & Description
 
-## Project Overview
-Prediction Market: A platform where users can bet on the outcomes of future events. If the predicted event occurs, those who bet on that outcome receive rewards.
+Prem is a prediction market on The Open Network (TON), addressing the need for a decentralized, transparent platform for betting on future events.
 
 ## Key Components
 
@@ -14,10 +13,10 @@ Prediction Market: A platform where users can bet on the outcomes of future even
 
 ### Market Factory Contract:
 
-Testnet Address: EQA7tmETnai0kxuXf2POMneCVJMX_DhOVr0-YiM9pilV-hFi
+Testnet Address: TBD
+Mainnet Address: TBD
 
-Creates new prediction markets.
-Keeps a registry of all active and past markets.
+Creates new prediction markets. (Currently only by deployer)
 
 ### Prediction Market Contract:
 
@@ -26,14 +25,29 @@ Manages the bets and the total pool for each outcome.
 Resolves the market based on the outcome.
 Distributes the winnings.
 
+### User Bet Contract:
+
+Manages the bet and the total pool user bet.
+Claim the user winnings.
+
 ### Token Contract (optional, if using custom tokens):
 
 Manages the platform's native token for betting and payouts.
 
-### Oracle Contract:
+## Gas Cost Optimization
 
-Feeds the result of the events into the Prediction Market Contract.
-Needs to be trusted and accurate to avoid manipulation.
+|      Contract     | Contract Message      | Gas Sent    | Operation Cost | Leaved for storage |
+|-------------------|-----------------------|-------------|----------------|--------------------|
+| MarketFactory     | CreateMarket          | 0.06        | 0.024          | 0.009              |
+| PredictionMarket  | MarketInitialize      | 0.027       | 0.0036         | 0.017              |
+| PredictionMarket  | PlaceBet              | 0.04        | 0.02           |                    |
+| PredictionMarket  | ResolveMarket         |             |                |                    |
+| PredictionMarket  | ClaimWinningsInfo     |             |                |                    |
+| UserBet           | PlaceBetInternal      | 0.02        | 0.011          | 0.0066             |
+| UserBet           | claimWinnings         |             |                |                    |
+| UserBet           | claimWinningsInternal |             |                |                    |
+
+
 
 ## Project structure
 
