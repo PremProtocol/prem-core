@@ -23,7 +23,7 @@ describe('MarketFactory', () => {
                 queryId: 0n,
             }
         );
-
+        
         expect(deployResult.transactions).toHaveTransaction({
             from: deployer.address,
             to: marketFactory.address,
@@ -38,68 +38,46 @@ describe('MarketFactory', () => {
     });
 
     it('should create market', async()=>{
-
         const createMarketResult = await marketFactory.send(deployer.getSender(), {
-            value: toNano('0.2')
+            value: toNano('0.06')
         }, {
             $$type: 'CreateMarket',
+            eventName: "New event",
             eventDescription: "New event",
+            eventType: "Crypto",
             endTime: BigInt(Date.now() + 60),
             outcomeName1: "outcomeName1",
             outcomeName2: "outcomeName2",
-            numOutcomes: 2n,
         })
 
+        const tx = createMarketResult.transactions[1];
+        if (tx.description.type !== 'generic') {
+            throw new Error('Generic transaction expected');
+        }
+    
+        // Check that the storagePhase fees are less than 1 TON over the course of a year
+        console.log(tx.totalFees);
+        
         expect(createMarketResult.transactions).toHaveTransaction({
             from: deployer.address,
             to: marketFactory.address,
             success: true,
         });
+
+        
     })
-
-    // it('should create initial state for new prediction market', async () => {
-    //     const createMarketResult = await marketFactory.send(deployer.getSender(), {
-    //         value: toNano('0.2')
-    //     }, {
-    //         $$type: 'CreateMarket',
-    //         eventDescription: "New event",
-    //         endTime: BigInt(Date.now() + 60),
-    //         numOutcomes: 2n,
-    //     })
-
-    //     // Check the state of the contract to ensure the market was created
-    // });
 
     it('should handle invalid end time', async () => {
         const createMarketResult = await marketFactory.send(deployer.getSender(), {
-            value: toNano('0.2')
+            value: toNano('0.06')
         }, {
             $$type: 'CreateMarket',
+            eventName: "New event",
             eventDescription: "New event",
+            eventType: "Crypto",
             endTime: 0n,
             outcomeName1: "outcomeName1",
             outcomeName2: "outcomeName2",
-            numOutcomes: 2n,
-        })
-
-        expect(createMarketResult.transactions).toHaveTransaction({
-            from: deployer.address,  
-            to: marketFactory.address,
-            success: false
-        });
-    });
-
-    // Test the handling of invalid number of outcomes
-    it('should handle invalid number of outcomes', async () => {
-        const createMarketResult = await marketFactory.send(deployer.getSender(), {
-            value: toNano('0.2')
-        }, {
-            $$type: 'CreateMarket',
-            eventDescription: "New event",
-            endTime: BigInt(Date.now() - 60),
-            outcomeName1: "outcomeName1",
-            outcomeName2: "outcomeName2",
-            numOutcomes: 0n,
         })
 
         expect(createMarketResult.transactions).toHaveTransaction({
@@ -116,27 +94,29 @@ describe('MarketFactory', () => {
 
         blockchain.now = time1;
         await marketFactory.send(deployer.getSender(), {
-            value: toNano('0.2')
+            value: toNano('0.06')
         }, {
             $$type: 'CreateMarket',
+            eventName: "New event",
             eventDescription: "New event",
+            eventType: "Crypto",
             endTime: BigInt(Date.now() + 60), //add now time
             outcomeName1: "outcomeName1",
             outcomeName2: "outcomeName2",
-            numOutcomes: 2n,
         });
     
         blockchain.now = time2;
 
         const res2 = await marketFactory.send(deployer.getSender(), {
-            value: toNano('0.2')
+            value: toNano('0.06')
         }, {
             $$type: 'CreateMarket',
+            eventName: "New event 2",
             eventDescription: "New event 2",
+            eventType: "Crypto",
             endTime: BigInt(Date.now() + 60),
             outcomeName1: "outcomeName1",
             outcomeName2: "outcomeName2",
-            numOutcomes: 2n,
         });
     
         const tx2 = res2.transactions[1];

@@ -4,25 +4,34 @@ message CreateMarketResponse {
 }
 
 message CreateMarket {
+    eventName: String;
     eventDescription: String;
     eventType: String;
     endTime: Int as uint64;
     // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;
     outcomeName2: String;
-    numOutcomes: Int as uint8;
 }
 
 // PredictionMarket Messages
 message MarketInitialize {
     owner: Address;
+    eventName: String;
     eventDescription: String;
     eventType: String;
     endTime: Int as uint64;
     // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;
     outcomeName2: String;
-    numOutcomes: Int as uint8;
+}
+
+message AddLiquidity {
+    amount: Int as coins;
+    oddsForOutcome1: Int as uint8;
+}
+
+message RemoveLiquidity {
+    amount: Int as coins;
 }
 
 message PlaceBet {
@@ -34,22 +43,27 @@ message ResolveMarket {
 }
 
 message ClaimWinningsInfo {
-    betAmount: Int as uint64;
+    betAmount: Int as coins;
     walletAddress: Address;
     outcome: Int as int8;
 }
 
 message PredictionMarketDetails {
     owner: Address;
+    eventName: String;
     eventDescription: String;
     eventType: String;
     endTime: Int as uint64;
-    // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;
     outcomeName2: String;
-    numOutcomes: Int as uint8;
-    totalOutcomeBets: map<Int as uint8, Int as uint64>;
-    totalPool: Int as uint64;
+    totalOutcome1Bets: Int as coins;
+    totalOutcome2Bets: Int as coins;
+    totalPool: Int as coins;
+    totalLiquidity: Int as coins;
+    reserve1: Int as coins;
+    reserve2: Int as coins;
+    oddsForOutcome1: Int as uint8;
+    protocolFeePercentage: Int as uint8;
     outcome: Int as int8;
     resolved: Bool;
 }
@@ -57,18 +71,11 @@ message PredictionMarketDetails {
 // UserBet Messages
 message PlaceBetInternal {
     outcome: Int as int8;
-    betAmount: Int as uint64;
+    betAmount: Int as coins;
 }
 
 message UserBetInfo{
     outcome: Int as int8;
-    betAmount: Int as uint64;
-}
-
-message ClaimWinningsInternal {
-    resolved: Bool;
-    winningOutcome: Int as uint8;
-    totalPool: Int as uint64;
-    totalOutcomeBets: Int as uint64;
+    betAmount: Int as coins;
 }
 
