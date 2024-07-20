@@ -92,13 +92,6 @@ contract PredictionMarket with Deployable {
         require(sender() == self.owner, "Only owner contract can provire liquidity for the market");
         
         self.removeLiquidity(msg.amount);
-
-        send(SendParameters{
-            to: self.owner,
-            value: msg.amount,
-            mode: SendRemainingValue + SendIgnoreErrors,
-            body: "gas excesses".asComment()
-        });
     }
 
     receive(msg: PlaceBet) {
@@ -201,7 +194,7 @@ contract PredictionMarket with Deployable {
         send(SendParameters{
             to: sender(),
             value: withdrawLiquidity,
-            mode: SendIgnoreErrors,
+            mode: SendRemainingValue + SendIgnoreErrors,
             body: "removeLiquidity".asComment()
         });
     }
