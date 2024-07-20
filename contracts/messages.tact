@@ -51,6 +51,8 @@ message ClaimWinningsInfo {
 
 message PredictionMarketDetails {
     owner: Address;
+    parent: Address;
+    seqno: Int as uint64;
     eventName: String;
     eventDescription: String;
     eventType: String;

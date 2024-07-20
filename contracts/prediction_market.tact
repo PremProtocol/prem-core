@@ -221,6 +221,8 @@ contract PredictionMarket with Deployable {
 
     get fun predictionMarketDetails(): PredictionMarketDetails {
         return PredictionMarketDetails{owner: self.owner,
+            parent: self.parent,
+            seqno: self.seqno,
             eventName: self.eventName,
             eventDescription: self.eventDescription,
             eventType: self.eventType,
