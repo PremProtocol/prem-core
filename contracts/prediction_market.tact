@@ -25,6 +25,7 @@ contract PredictionMarket with Deployable {
     reserve2: Int as coins;
     oddsForOutcome1: Int as uint8;
     protocolFeePercentage: Int as uint8;
+    protocolFees: Int as coins;
 
     init(parent: Address, 
             seqno: Int) {
@@ -47,6 +48,7 @@ contract PredictionMarket with Deployable {
         self.reserve2 = 0;
         self.oddsForOutcome1 = 0;
         self.protocolFeePercentage = 10; // 1% fee for the protocol owner
+        self.protocolFees = 0;
     }
 
     receive(msg: MarketInitialize) {
@@ -71,7 +73,7 @@ contract PredictionMarket with Deployable {
     }
 
     receive(msg: AddLiquidity) {
-        require(msg.amount > 0 && msg.amount < context().value, "Amount must be positive and less than the value sent");
+        require(msg.amount > 0 && msg.amount < context().value + self.TonForCompute, "Amount must be positive and less than the value sent");
         require(sender() == self.owner, "Only owner contract can provire liquidity for the market");
         
         self.setLiquidity(msg.amount, msg.oddsForOutcome1);
@@ -79,7 +81,7 @@ contract PredictionMarket with Deployable {
         // pay-back remaining gas
         send(SendParameters{
             to: self.owner,
-            value: 0,
+            value: context().value - msg.amount - self.TonForCompute,
             mode: SendIgnoreErrors,
             body: "gas excesses".asComment()
         });
@@ -100,12 +102,14 @@ contract PredictionMarket with Deployable {
     }
 
     receive(msg: PlaceBet) {
+        require(msg.amount > 0 && msg.amount < context().value + self.TonForCompute, "Amount must be positive and less than the value sent");
         require(now() < self.endTime, "Betting has ended");
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
 
-        let newBetAmount: Int = context().value - self.TonForCompute;
-        let totalBetsBefore: Int = self.totalOutcome1Bets + self.totalOutcome2Bets;
-        let totalBetsAfter: Int = totalBetsBefore + newBetAmount;
+        let commission: Int = (msg.amount * self.protocolFeePercentage) / 1000;
+        self.protocolFees += commission;
+        
+        let newBetAmount: Int = msg.amount - commission;
         if(msg.outcome == 0) {
             self.totalOutcome1Bets += newBetAmount;
         } else if(msg.outcome == 1) {
@@ -113,10 +117,9 @@ contract PredictionMarket with Deployable {
         }
 
         // Calculate the win percentage for the selected outcome
-        let winPercentage: Int = (msg.outcome == 0 ? self.totalOutcome1Bets : self.totalOutcome2Bets) * 100 / totalBetsAfter;
-        
         self.totalPool += newBetAmount;
-
+        let winPercentage: Int = (msg.outcome == 0 ? self.totalOutcome1Bets : self.totalOutcome2Bets) * 100 / self.totalPool;
+        
         self.placeUserBet(sender(), myAddress(), newBetAmount, msg.outcome);
     }
 
@@ -147,6 +150,20 @@ contract PredictionMarket with Deployable {
             value: userShare,
             mode: SendRemainingValue + SendIgnoreErrors,
             body: "claimWinningsInternal".asComment()
+        });
+    }
+
+    receive("collectFees") {
+        require(sender() == self.owner, "Only owner contract can collect fees");
+        
+        let protocolFeesToCollect: Int = self.protocolFees;
+        self.protocolFees = 0;
+
+        send(SendParameters{
+            to: self.owner,
+            value: protocolFeesToCollect,
+            mode: SendRemainingValue + SendIgnoreErrors,
+            body: "collectFees".asComment()
         });
     }
 
@@ -219,7 +236,8 @@ contract PredictionMarket with Deployable {
             oddsForOutcome1: self.oddsForOutcome1,
             protocolFeePercentage: self.protocolFeePercentage,
             resolved: self.resolved,
-            outcome: self.outcome
+            outcome: self.outcome,
+            protocolFees: self.protocolFees
         };
     }
 

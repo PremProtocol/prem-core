@@ -35,6 +35,7 @@ message RemoveLiquidity {
 }
 
 message PlaceBet {
+    amount: Int as coins;
     outcome: Int as int8;
 }
 
@@ -66,6 +67,7 @@ message PredictionMarketDetails {
     protocolFeePercentage: Int as uint8;
     outcome: Int as int8;
     resolved: Bool;
+    protocolFees: Int as coins;
 }
 
 // UserBet Messages
