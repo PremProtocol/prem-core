@@ -250,7 +250,8 @@ contract PredictionMarket with Deployable {
             protocolFeePercentage: self.protocolFeePercentage,
             resolved: self.resolved,
             outcome: self.outcome,
-            protocolFees: self.protocolFees
+            protocolFees: self.protocolFees,
+            isRemoved: self.isRemoved
         };
     }
 

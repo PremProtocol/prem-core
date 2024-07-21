@@ -70,6 +70,7 @@ message PredictionMarketDetails {
     outcome: Int as int8;
     resolved: Bool;
     protocolFees: Int as coins;
+    isRemoved: Bool;
 }
 
 // UserBet Messages
