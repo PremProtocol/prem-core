@@ -18,11 +18,10 @@ contract UserBet with Deployable {
     }
 
     receive(msg: PlaceBetInternal) {
-        //require(sender() == self.parent, "Only the market can place a bet");
-        require(self.outcome == -1, "Bet already placed");
+        require(sender() == self.parent, "Only the market can place a bet");
+        require(self.outcome == -1 || self.outcome == msg.outcome, "Should be first bet or same outcome bet");
         self.outcome = msg.outcome;
-        //TODO: Think about adding more than one bet in future
-        self.betAmount = msg.betAmount;
+        self.betAmount += msg.betAmount;
 
         // Transfer the bet amount to the contract
         send(SendParameters{
@@ -68,6 +67,8 @@ contract UserBet with Deployable {
     get fun userBet(): UserBetInfo {
         return UserBetInfo{
             betAmount: self.betAmount,
-            outcome: self.outcome};
+            outcome: self.outcome,
+            isClaimed: self.isClaimed
+        };
     }
 }

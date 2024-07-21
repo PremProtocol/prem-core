@@ -81,5 +81,6 @@ message PlaceBetInternal {
 message UserBetInfo{
     outcome: Int as int8;
     betAmount: Int as coins;
+    isClaimed: Bool;
 }
 
