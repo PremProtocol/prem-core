@@ -14,6 +14,7 @@ contract PredictionMarket with Deployable {
     eventType: String;
     endTime: Int as uint64;
     resolved: Bool;
+    isRemoved: Bool;
     outcome: Int as int8;
     outcomeName1: String;
     outcomeName2: String;
@@ -27,6 +28,7 @@ contract PredictionMarket with Deployable {
     protocolFeePercentage: Int as uint8;
     protocolFees: Int as coins;
 
+
     init(parent: Address, 
             seqno: Int) {
         self.owner = newAddress(0, 0);
@@ -38,6 +40,7 @@ contract PredictionMarket with Deployable {
         self.endTime = 0;
         self.outcomeName1 = "";
         self.outcomeName2 = "";
+        self.isRemoved = false;
         self.resolved = false;
         self.outcome = -1;
         self.totalOutcome1Bets = 0;
@@ -160,6 +163,19 @@ contract PredictionMarket with Deployable {
         });
     }
 
+    receive("remove") {
+        require(sender() == self.owner, "Only owner contract can collect fees");
+        
+        self.isRemoved = true;
+
+        send(SendParameters{
+            to: self.owner,
+            value: 0,
+            mode: SendRemainingValue + SendIgnoreErrors,
+            body: "collectFees".asComment()
+        });
+    }
+
     bounced(src: Slice) {
         // ...
     }
@@ -191,9 +207,11 @@ contract PredictionMarket with Deployable {
         self.totalOutcome1Bets -= liquidityForOutcome1;
         self.totalOutcome2Bets -= liquidityForOutcome2;
 
+        let amount: Int = min(withdrawLiquidity, myBalance() - context().value - self.MinTonForStorage);
+        
         send(SendParameters{
             to: sender(),
-            value: withdrawLiquidity,
+            value: amount,
             mode: SendRemainingValue + SendIgnoreErrors,
             body: "removeLiquidity".asComment()
         });
