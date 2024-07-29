@@ -28,7 +28,6 @@ contract PredictionMarket with Deployable {
     protocolFeePercentage: Int as uint8;
     protocolFees: Int as coins;
 
-
     init(parent: Address, 
             seqno: Int) {
         self.owner = newAddress(0, 0);
@@ -165,6 +164,10 @@ contract PredictionMarket with Deployable {
 
     receive("remove") {
         require(sender() == self.owner, "Only owner contract can collect fees");
+        require(self.resolved, "Market may be removed to before delete");
+        require(now() < self.endTime + (14 * 86400), "Market may be removed to after 2 weeks"); // end time + 2 weeks
+        require(self.totalLiquidity == 0, "Market may be removed to after liquidity is removed");
+        require(self.protocolFees == 0, "Market may be removed to after protocol fees are collected");
         
         self.isRemoved = true;
 
@@ -172,7 +175,7 @@ contract PredictionMarket with Deployable {
             to: self.owner,
             value: 0,
             mode: SendRemainingValue + SendIgnoreErrors,
-            body: "collectFees".asComment()
+            body: "gas excesses".asComment()
         });
     }
 
