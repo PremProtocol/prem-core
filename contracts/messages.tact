@@ -11,11 +11,14 @@ message CreateMarket {
     // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;
     outcomeName2: String;
+    liquidityAmount: Int as coins;
+    initialOddsForOutcome1: Int as uint8;
 }
 
 // PredictionMarket Messages
 message MarketInitialize {
     owner: Address;
+    protocolOwner: Address;
     eventName: String;
     eventDescription: String;
     eventType: String;
@@ -23,11 +26,12 @@ message MarketInitialize {
     // need to rewrite it to map, but luck of examples/tools
     outcomeName1: String;
     outcomeName2: String;
+    liquidityAmount: Int as coins;
+    initialOddsForOutcome1: Int as uint8;
 }
 
 message AddLiquidity {
     amount: Int as coins;
-    oddsForOutcome1: Int as uint8;
 }
 
 message RemoveLiquidity {

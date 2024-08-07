@@ -20,8 +20,9 @@ contract MarketFactory with Deployable, OwnableTransferable {
         require(msg.outcomeName1 != "", "Outcome names must be provided");
         require(msg.outcomeName2 != "", "Outcome names must be provided");
         require(msg.eventType != "", "Event type has must be provided");
-        self.requireOwner();
-
+        require(context().value > ton("5"), "You should provide mininum of 5 TON liquidity");
+        require(msg.liquidityAmount > 0 && msg.liquidityAmount < context().value + self.MinTonForStorage, "Amount must be positive and less than the value sent");
+        
         let initState: StateInit = initOf PredictionMarket(myAddress(), self.predictionMarketCount);
         let preMarketContractAddress: Address = contractAddress(initState);
         self.predictionMarketCount += 1;
@@ -38,12 +39,15 @@ contract MarketFactory with Deployable, OwnableTransferable {
             code: initState.code,
             data: initState.data,
             body: MarketInitialize{owner: sender(),
+                        protocolOwner: self.owner,
                         eventName: msg.eventName,
                         eventDescription: msg.eventDescription, 
                         eventType: msg.eventType,
                         endTime: msg.endTime, 
                         outcomeName1: msg.outcomeName1, 
-                        outcomeName2: msg.outcomeName2}.toCell()
+                        outcomeName2: msg.outcomeName2,
+                        liquidityAmount: msg.liquidityAmount,
+                        initialOddsForOutcome1: msg.initialOddsForOutcome1}.toCell()
         });
     }
 

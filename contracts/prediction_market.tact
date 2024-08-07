@@ -7,6 +7,7 @@ contract PredictionMarket with Deployable {
     const MinTonForStorage: Int = ton("0.02");
     const TonForCompute: Int = ton("0.02");
     owner: Address;
+    protocolOwner: Address;
     parent: Address;
     seqno: Int as uint64;
     eventName: String;
@@ -31,6 +32,7 @@ contract PredictionMarket with Deployable {
     init(parent: Address, 
             seqno: Int) {
         self.owner = newAddress(0, 0);
+        self.protocolOwner = newAddress(0, 0);
         self.parent = parent;
         self.seqno = seqno;
         self.eventName = "";
@@ -58,6 +60,7 @@ contract PredictionMarket with Deployable {
         require(msg.endTime > now(), "End time must be in the future");
         
         self.owner = msg.owner;
+        self.protocolOwner = msg.protocolOwner;
         self.eventName = msg.eventName;
         self.eventDescription = msg.eventDescription;
         self.eventType = msg.eventType;
@@ -65,10 +68,12 @@ contract PredictionMarket with Deployable {
         self.outcomeName1 = msg.outcomeName1;
         self.outcomeName2 = msg.outcomeName2;
 
+        self.setLiquidity(msg.liquidityAmount, msg.initialOddsForOutcome1);
+
         // pay-back remaining gas
         send(SendParameters{
             to: self.owner,
-            value: context().value - self.MinTonForStorage,
+            value: context().value - msg.liquidityAmount - self.MinTonForStorage,
             mode: SendIgnoreErrors,
             body: "gas excesses".asComment()
         });
@@ -78,7 +83,7 @@ contract PredictionMarket with Deployable {
         require(msg.amount > 0 && msg.amount < context().value + self.TonForCompute, "Amount must be positive and less than the value sent");
         require(sender() == self.owner, "Only owner contract can provire liquidity for the market");
         
-        self.setLiquidity(msg.amount, msg.oddsForOutcome1);
+        self.setLiquidity(msg.amount, self.oddsForOutcome1);
 
         // pay-back remaining gas
         send(SendParameters{
@@ -119,7 +124,7 @@ contract PredictionMarket with Deployable {
     }
 
     receive(msg: ResolveMarket) {
-        require(sender() == self.owner, "Only owner can resolve market");
+        require(sender() == self.owner || sender() == self.protocolOwner, "Only owners can resolve market");
         require(now() >= self.endTime, "Event has not ended");
         require(!self.resolved, "Market already resolved");
         require(msg.outcome >= 0 && msg.outcome < self.numOutcomes, "Invalid outcome");
@@ -149,7 +154,7 @@ contract PredictionMarket with Deployable {
     }
 
     receive("collectFees") {
-        require(sender() == self.owner, "Only owner contract can collect fees");
+        require(sender() == self.protocolOwner, "Only owner contract can collect fees");
         
         let protocolFeesToCollect: Int = self.protocolFees;
         self.protocolFees = 0;
@@ -163,7 +168,7 @@ contract PredictionMarket with Deployable {
     }
 
     receive("remove") {
-        require(sender() == self.owner, "Only owner contract can collect fees");
+        require(sender() == self.owner || sender() == self.protocolOwner, "Only owners contract can collect fees");
         require(self.resolved, "Market may be removed to before delete");
         require(now() < self.endTime + (14 * 86400), "Market may be removed to after 2 weeks"); // end time + 2 weeks
         require(self.totalLiquidity == 0, "Market may be removed to after liquidity is removed");
